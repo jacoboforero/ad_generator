@@ -1,7 +1,7 @@
 import express from "express";
 import { generateCompletion } from "./openai/apicalls.js";
 import dotenv from "dotenv";
-import { postTweet, deleteTweet } from "./twitter/apicalls.js"; // Import deleteTweet too
+import { postTweetText, deleteTweet } from "./twitter/apicalls.js"; // Import deleteTweet too
 dotenv.config();
 
 const app = express();
@@ -60,13 +60,15 @@ app.post("/generate-ad", async (req, res) => {
 app.post("/tweet", async (req, res) => {
   try {
     const tweetText = req.body.text;
-    const response = await postTweet(tweetText);
+    const response = await postTweetText(tweetText);
     res.send(response);
   } catch (error) {
     console.error("Detailed error:", error);
     res.status(500).send(`Error posting tweet: ${error.message}`);
   }
 });
+
+app.post("/tweetImageAd");
 
 app.delete("/tweet/:id", async (req, res) => {
   try {

@@ -28,7 +28,9 @@ export const postTweet = async (text) => {
   const request_data = {
     url: "https://api.twitter.com/2/tweets",
     method: "POST",
-    data: { text: text },
+    params: {
+      text: text,
+    },
   };
 
   try {
@@ -64,7 +66,9 @@ export const deleteTweet = async (tweetId) => {
   const request_data = {
     url: "https://api.twitter.com/2/tweets",
     method: "POST",
-    data: { text: text },
+    params: {
+      text: text,
+    },
   };
 
   try {

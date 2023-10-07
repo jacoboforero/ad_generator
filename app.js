@@ -13,6 +13,50 @@ app.get("/", (req, res) => {
   res.send("Welcome to my OpenAI-powered server!");
 });
 
+app.post("/generate-ad", async (req, res) => {
+  try {
+    const {
+      name,
+      industry,
+      motto,
+      businessDescription,
+      advertisementImage,
+      colors,
+      designIdeas,
+      adGoals,
+      tone,
+      keywords,
+      webpageLink,
+      platform,
+    } = req.body;
+
+    const prompt = `
+      Business: ${name} (${industry})
+      Motto: ${motto}
+      Description: ${businessDescription}
+
+      Visuals:
+      Image: ${advertisementImage}
+      Colors: ${colors}
+      Design Ideas: ${designIdeas}
+
+      Objective: 
+      Goals: ${adGoals}
+      Tone: ${tone}
+      Keywords: ${keywords}
+
+      Webpage: ${webpageLink}
+
+      Generate a ${platform} post advertisement.
+    `;
+
+    const generatedPost = await generateCompletion(prompt);
+    res.send(generatedPost);
+  } catch (error) {
+    res.status(500).send(`Error generating ad: ${error.message}`);
+  }
+});
+
 app.post("/tweet", async (req, res) => {
   try {
     const tweetText = req.body.text;

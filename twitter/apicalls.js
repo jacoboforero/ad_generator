@@ -2,6 +2,8 @@ import axios from "axios";
 import OAuth from "oauth-1.0a";
 import crypto from "crypto";
 import dotenv from "dotenv";
+import FormData from "form-data";
+
 import { Console } from "console";
 dotenv.config();
 
@@ -24,15 +26,15 @@ const token = {
 
 const axiosInstance = axios.create();
 
-export const postTweet = async (text) => {
+export const postTweet = async (text, mediaId = null) => {
   const request_data = {
     url: "https://api.twitter.com/2/tweets",
     method: "POST",
-    params: {
+    data: {
       text: text,
+      ...(mediaId && { media: { media_ids: [mediaId] } }),
     },
   };
-
   try {
     const response = await axiosInstance({
       url: request_data.url,
@@ -41,9 +43,7 @@ export const postTweet = async (text) => {
         ...oauth.toHeader(oauth.authorize(request_data, token)),
         "Content-Type": "application/json",
       },
-      data: {
-        text: text, // update this line as well from `status` to `text`
-      },
+      data: request_data.data, // Changed this line to pass the entire data object
     });
 
     return response.data;
@@ -78,7 +78,6 @@ export const deleteTweet = async (tweetId) => {
         ...oauth.toHeader(oauth.authorize(request_data, token)),
       },
     });
-
     return response.data;
   } catch (error) {
     console.error(
@@ -92,3 +91,37 @@ export const deleteTweet = async (tweetId) => {
     );
   }
 };
+
+export async function uploadMedia(imageFile) {
+  const formData = new FormData();
+  formData.append("media", imageFile);
+
+  try {
+    const headers = {
+      ...oauth.toHeader(
+        oauth.authorize(
+          {
+            url: "https://upload.twitter.com/1.1/media/upload.json",
+            method: "POST",
+          },
+          token
+        )
+      ),
+      ...formData.getHeaders(),
+    };
+
+    const response = await axiosInstance.post(
+      "https://upload.twitter.com/1.1/media/upload.json",
+      formData,
+      {
+        headers,
+      }
+    );
+
+    console.log(response.data);
+    return response.data.media_id_string;
+  } catch (error) {
+    console.error("Error uploading media:", error);
+    throw new Error(`Error uploading media: ${error.message}`);
+  }
+}

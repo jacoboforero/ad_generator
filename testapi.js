@@ -1,14 +1,24 @@
-import { generateCompletion } from "./openai/apicalls.js"; // Assuming you've renamed apicalls.js to apicalls.mjs
+import { postTweet, deleteTweet, uploadMedia } from "./twitter/apicalls.js";
+import fs from "fs";
 
-async function testAPI() {
+(async () => {
   try {
-    const prompt =
-      "Translate the following English text to French: 'Hello, how are you?'";
-    const response = await generateCompletion(prompt);
-    console.log("API Response:", response);
-  } catch (error) {
-    console.error("Error calling the API:", error);
-  }
-}
+    //  Read the image file
+    const imageFile = fs.createReadStream("./testing_image.jpg");
 
-testAPI();
+    //Upload the media to Twitter and get the mediaId
+    const mediaId = await uploadMedia(imageFile);
+
+    //Compose the tweet text
+    const tweetText = "This is a test tweet with an image";
+
+    // Post the tweet with the media
+    const response = await postTweet(tweetText, mediaId);
+
+    //Log the successful tweet post response
+    console.log("Tweet posted successfully:", response);
+  } catch (error) {
+    // Error handling: Log the error message
+    console.error("Error:", error.message);
+  }
+})();

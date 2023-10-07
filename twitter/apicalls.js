@@ -2,6 +2,7 @@ import axios from "axios";
 import OAuth from "oauth-1.0a";
 import crypto from "crypto";
 import dotenv from "dotenv";
+import { Console } from "console";
 dotenv.config();
 
 // Initialize OAuth1.0a
@@ -18,26 +19,29 @@ const oauth = OAuth({
 
 const token = {
   key: process.env.TWITTER_ACCESS_TOKEN, // User-specific Access Token
-  secret: process.env.TWITTER_ACCESS_TOKEN_SECRET, // User-specific Access Token Secret
+  secret: process.env.TWITTER_SECRET_ACCESS_TOKEN, // User-specific Access Token Secret
 };
 
 const axiosInstance = axios.create();
 
 export const postTweet = async (text) => {
   const request_data = {
-    url: "https://api.twitter.com/1.1/statuses/update.json",
+    url: "https://api.twitter.com/2/tweets",
     method: "POST",
-    data: { status: text },
+    data: { text: text },
   };
 
   try {
-    const response = await axiosInstance(request_data.url, {
+    const response = await axiosInstance({
+      url: request_data.url,
       method: request_data.method,
       headers: {
         ...oauth.toHeader(oauth.authorize(request_data, token)),
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
       },
-      data: `status=${encodeURIComponent(text)}`,
+      data: {
+        text: text, // update this line as well from `status` to `text`
+      },
     });
 
     return response.data;
@@ -49,7 +53,7 @@ export const postTweet = async (text) => {
     throw new Error(
       `Error posting tweet: ${
         error.response
-          ? error.response.data.error || JSON.stringify(error.response.data)
+          ? JSON.stringify(error.response.data, null, 2)
           : error.message
       }`
     );
@@ -58,8 +62,9 @@ export const postTweet = async (text) => {
 
 export const deleteTweet = async (tweetId) => {
   const request_data = {
-    url: `https://api.twitter.com/1.1/statuses/destroy/${tweetId}.json`,
+    url: "https://api.twitter.com/2/tweets",
     method: "POST",
+    data: { text: text },
   };
 
   try {
@@ -72,6 +77,10 @@ export const deleteTweet = async (tweetId) => {
 
     return response.data;
   } catch (error) {
+    console.error(
+      "Error deleting tweet:",
+      error.response ? error.response.data : error
+    );
     throw new Error(
       `Error deleting tweet: ${
         error.response ? error.response.data.error : error.message
@@ -79,5 +88,3 @@ export const deleteTweet = async (tweetId) => {
     );
   }
 };
-
-// ... rest of your code

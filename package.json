@@ -19,7 +19,8 @@
     "form-data": "^4.0.0",
     "oauth-1.0a": "^2.2.6",
     "openai": "^4.11.1",
-    "twitter-api-sdk": "^1.2.1"
+    "twitter-api-sdk": "^1.2.1",
+    "twitter-api-v2": "^1.15.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

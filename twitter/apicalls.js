@@ -4,6 +4,7 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import { Console } from "console";
 import FormData from "form-data";
+import { TwitterApi } from "twitter-api-v2";
 import fs from "fs";
 dotenv.config();
 
@@ -17,6 +18,13 @@ const oauth = OAuth({
   hash_function(base_string, key) {
     return crypto.createHmac("sha1", key).update(base_string).digest("base64");
   },
+});
+
+const client = new TwitterApi({
+  appKey: process.env.TWITTER_API_KEY,
+  appSecret: process.env.TWITTER_API_SECRET,
+  accessToken: process.env.TWITTER_ACCESS_TOKEN,
+  accessSecret: process.env.TWITTER_SECRET_ACCESS_TOKEN,
 });
 
 const token = {
@@ -67,47 +75,28 @@ export const postTweetText = async (text) => {
 };
 
 export const postTweetWithImage = async (text, filePath) => {
-  // First, upload the media to get a media_id
-  const media_id_string = await uploadMedia(filePath);
-
-  // Now post a tweet with the media_id and text
-  const request_data = {
-    url: "https://api.twitter.com/2/tweets",
-    method: "POST",
-    data: {
-      text: text,
-      media: {
-        media_ids: [media_id_string], // Adjusted structure for media attachment
-      },
-    },
-  };
-
-  console.log("Request Data:", JSON.stringify(request_data, null, 2));
-
   try {
-    const response = await axiosInstance({
-      url: request_data.url,
-      method: request_data.method,
-      headers: {
-        ...oauth.toHeader(oauth.authorize(request_data, token)),
-        "Content-Type": "application/json",
+    // First, upload the media to get a media_id
+    const media_id_string = await uploadMedia(filePath);
+
+    // Ensure media_ids is an array of strings
+    const media_ids = [media_id_string];
+
+    // Now post a tweet with the media_id and text
+    const { data: createdTweet } = await client.v2.tweet(text, {
+      media: {
+        media_ids: media_ids, // Nest media_ids inside a media object
       },
-      data: request_data.data,
     });
 
-    return response.data;
+    // Log the successful tweet post response
+    console.log("Tweet", createdTweet.id, ":", createdTweet.text);
+
+    return createdTweet;
   } catch (error) {
-    console.error(
-      "Error posting tweet:",
-      error.response ? JSON.stringify(error.response.data, null, 2) : error
-    );
-    throw new Error(
-      `Error posting tweet: ${
-        error.response
-          ? JSON.stringify(error.response.data, null, 2)
-          : error.message
-      }`
-    );
+    // Error handling: Log the error message
+    console.error("Error:", error.message);
+    throw new Error(`Error posting tweet: ${error.message}`);
   }
 };
 
@@ -162,7 +151,7 @@ export const uploadMedia = async (filePath) => {
       },
       data: form,
     });
-    console.log("Media Upload Response:", response.data);
+
     return response.data.media_id_string; // Extract media_id from response
   } catch (error) {
     console.error(

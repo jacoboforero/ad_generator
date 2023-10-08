@@ -1,5 +1,6 @@
 import { postTweetWithImage, uploadMedia } from "./twitter/apicalls.js";
 import path from "path";
+import fs from "fs";
 
 (async () => {
   try {
@@ -8,6 +9,10 @@ import path from "path";
 
     // Compose the tweet text
     const tweetText = "This is a test tweet with an image";
+
+    // Log the input to the function
+    console.log("Tweet text:", tweetText);
+    console.log("Image file path:", imageFilePath);
 
     // Post the tweet with the media
     const response = await postTweetWithImage(tweetText, imageFilePath); // pass the file path, not the file content

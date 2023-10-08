@@ -90,6 +90,17 @@ app.get("/generate", async (req, res) => {
   }
 });
 
+app.post("/tweetImage", async (req, res) => {
+  try {
+    const { text, imagePath } = req.body; // Get text and imagePath from the request body
+    const response = await postTweetWithImage(text, imagePath); // Call postTweetWithImage with the text and imagePath
+    res.send(response); // Send the response back to the client
+  } catch (error) {
+    console.error("Detailed error:", error);
+    res.status(500).send(`Error posting tweet with image: ${error.message}`);
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

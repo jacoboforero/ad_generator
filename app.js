@@ -1,17 +1,26 @@
 import express from "express";
 import { generateCompletion } from "./openai/apicalls.js";
 import dotenv from "dotenv";
-import { postTweetText, deleteTweet } from "./twitter/apicalls.js"; // Import deleteTweet too
+import cors from "cors";
+import multer from "multer";
+
+import {
+  postTweetText,
+  deleteTweet,
+  postTweetWithImage,
+} from "./twitter/apicalls.js"; // Import deleteTweet too
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json()); // This allows you to parse incoming JSON payloads
-
+app.use(cors({ origin: "http://localhost:5173" }));
 app.get("/", (req, res) => {
   res.send("Welcome to my OpenAI-powered server!");
 });
+
+const upload = multer({ dest: "uploads/" });
 
 app.post("/generate-ad", async (req, res) => {
   try {
@@ -100,6 +109,48 @@ app.post("/tweetImage", async (req, res) => {
     res.status(500).send(`Error posting tweet with image: ${error.message}`);
   }
 });
+
+app.post(
+  "/submit-form",
+  upload.single("advertisementImage"),
+  async (req, res) => {
+    try {
+      const formData = req.body; // Assuming form data comes as a single string named formData
+      const advertisementImage = req.file ? req.file.path : null;
+      // Assuming the image comes as advertisementImage
+      console.log(req.body);
+
+      // Constructing the prompt as per your given format
+      const prompt = `
+      You are assuming the role of a marketing expert, and an expert at counting characters. You are tasked with creating a twitter post for a client. The client has filled out the following data about their company and product:
+
+      ${JSON.stringify(req.body)}
+
+      You are to create a high quality text for a twitter post to go along with the image the client provided. Twitter has a 250 character limit. Your response should be less than this. 
+    `;
+
+      // Generating the ad text
+      const generatedContent = await generateCompletion(prompt);
+
+      let tweetResponse;
+      if (advertisementImage) {
+        // If an image is provided, post the tweet with the image
+        tweetResponse = await postTweetWithImage(
+          generatedContent,
+          advertisementImage
+        );
+      } else {
+        // If no image is provided, post the tweet as text only
+        tweetResponse = await postTweetText(generatedContent);
+      }
+
+      res.json({ message: "Tweet posted successfully!", tweetResponse });
+    } catch (error) {
+      console.error("Detailed error:", error);
+      res.status(500).send(`Error processing form data: ${error.message}`);
+    }
+  }
+);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
